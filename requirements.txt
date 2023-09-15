@@ -1,0 +1,7 @@
+django==4.2.4
+djangorestframework-simplejwt
+drf-yasg
+psycopg2-binary==2.9.7
+Pillow
+requests
+django-cors-headers

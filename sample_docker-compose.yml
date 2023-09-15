@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  # Django web application service
+  web:
+    image: your-django-image:latest  # Replace with the name/tag of your Django image
+    container_name: django_web
+    volumes:
+      - ./app:/app  # Mount your Django application code into the container
+    ports:
+      - "8000:8000"  # Map the container's port 8000 to host's port 8000
+    depends_on:
+      - db  # Ensure the database service is started first
+
+  # PostgreSQL database service
+  db:
+    image: postgres:13  # Use the PostgreSQL 13 image
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: mydb  # Replace with your database name
+      POSTGRES_USER: myuser  # Replace with your database user
+      POSTGRES_PASSWORD: mypassword  # Replace with your database password
+
+  # Other services (if needed)
+  # ...
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  # Define volumes for persistent data (if needed)
+  # ...
