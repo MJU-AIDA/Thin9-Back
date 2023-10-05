@@ -1,0 +1,12 @@
+version: '3'
+services:
+  # PostgreSQL database service
+  db:
+    image: postgres:13  # Use the PostgreSQL 13 image
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: "cal_db"  # Replace with your database name
+      POSTGRES_USER: "admin"  # Replace with your database user
+      POSTGRES_PASSWORD: "1234"  # Replace with your database password
+    ports:
+    -  "5432:5432"
