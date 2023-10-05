@@ -92,8 +92,8 @@ DATABASES = {
         'NAME': 'cal_db',
         'USER': 'admin',
         'PASSWORD': '1234',
-        'HOST': 'localhost',
-        # 'HOST': 'host.docker.internal',
+        # 'HOST': 'localhost',
+        'HOST': 'host.docker.internal',
         'PORT': '5432',
     }
 }
