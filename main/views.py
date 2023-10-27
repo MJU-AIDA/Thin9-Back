@@ -1,3 +1,4 @@
+from xxlimited import foo
 from django.shortcuts import render
 from accounts.views import validate_token
 from accounts.views import get_id_from_token
@@ -167,22 +168,31 @@ def ImageUpload(request):
         print(f"uploaded_file_url : {uploaded_file_url}")
         file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file_url.lstrip('/media/'))  # 파일 경로 URL
 
-        predicted_name = str(prediction(file_path))  # 모델이 예측한 음식 이름 받아옴
+        predicted_name = prediction(file_path)  # 모델이 예측한 음식 이름 받아옴 (list or string)
         # 업로드 성공
         try:
-            food = Food.objects.get(name=predicted_name) # ?: 얘는 어디서 얻어오는 건지...
-            data = {
-                'message': '사진 업로드 성공',
-                'predicted': predicted_name,
-                'kcal': food.kcal,
-                'carbon': food.carbon,
-                'pro': food.pro,
-                'fat': food.fat,
-            }
-            return JsonResponse(data, status=200)
+            print(f"여기까지 옴:{predicted_name}")
+            result = []
+            for foodname in predicted_name:
+                print(foodname)
+                if foodname == "용기":
+                    continue
+                food = Food.objects.get(name=foodname)
+                data = {
+                    'predicted': foodname,
+                    'kcal': food.kcal,
+                    'carbon': food.carbon,
+                    'pro': food.pro,
+                    'fat': food.fat,
+                }
+                result.append(data)
+                print(result)
+            return JsonResponse({'message': '사진 업로드 성공', "result": result}, status=200)
 
         except Food.DoesNotExist:
             return JsonResponse({'error': f"{predicted_name} 을 찾을 수 없습니다."}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': f"{e}"}, status=404)
     # POST 요청이 아닌 경우
     return JsonResponse({"error": "Invalid request"}, status=400)
 
@@ -349,7 +359,8 @@ def prediction(image_path):
         image_data = f.read()  # 이미지
     print("-------------------", image_path)
     # FastAPI 호출
-    url = 'http://0.0.0.0:8001/img_object_detection_to_json'
+    # url = 'http://0.0.0.0:8001/img_object_detection_to_json'
+    url = 'http://host.docker.internal:8001/img_object_detection_to_json'
     files = {'file': (image_path.split("/")[-1], open(image_path, 'rb'), 'image/jpeg')}
     headers = {'accept': 'application/json'}
 
@@ -358,9 +369,14 @@ def prediction(image_path):
     # 결과 확인
     if response.status_code == 200:
         result = response.json()
+        # # !임시코드임(제거 필요)
+        # r_result = {"detect_objects":[], }
+        # for d in result["detect_objects"]:
+        #     if d["name"] != "용기":
+        #         r_result.append(d)
         print(result)
-        food_list = ['dummy']
-        confi_list = [0]
+        food_list = []
+        confi_list = []
         for i in result["detect_objects"]:
             print(i)
             food_list.append(i["name"])
@@ -381,7 +397,7 @@ def prediction(image_path):
         # print("성공")
         # print(f"분류 결과 : {top5_json}")
         print(food_list)
-        return food_list[0]  # top 1의 음식 이름
+        return food_list  # top 1의 음식 이름
     else:
         print("실패")
         return None
