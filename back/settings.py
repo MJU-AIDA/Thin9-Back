@@ -172,5 +172,6 @@ APPEND_SLASH = True
 #CORS 설정
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:8000",
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "http://localhost:8001"
 ]
