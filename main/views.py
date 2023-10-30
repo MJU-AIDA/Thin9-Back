@@ -166,7 +166,9 @@ def ImageUpload(request):
         # predict 수행
         uploaded_file_url = handle_uploaded_file(food_image)
         print(f"uploaded_file_url : {uploaded_file_url}")
-        file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file_url.lstrip('/media/'))  # 파일 경로 URL
+        # file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file_url.lstrip('/media/'))  # 파일 경로 URL
+        file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file_url.replace('/media/', ''))  # 파일 경로 URL
+        print(file_path)
 
         predicted_name = prediction(file_path)  # 모델이 예측한 음식 이름 받아옴 (list or string)
         # 업로드 성공
@@ -361,7 +363,7 @@ def prediction(image_path):
     print("-------------------", image_path)
     # FastAPI 호출
     # url = 'http://0.0.0.0:8001/img_object_detection_to_json'
-    url = 'http://host.docker.internal:8001/img_object_detection_to_json'
+    url = f'{settings.ENV("ML_SERVER")}/img_object_detection_to_json'
     files = {'file': (image_path.split("/")[-1], open(image_path, 'rb'), 'image/jpeg')}
     headers = {'accept': 'application/json'}
 

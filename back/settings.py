@@ -13,12 +13,18 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 # python manage.py collectstatic
 
 from pathlib import Path
+import environ
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+
+ENV = environ.Env(DEBUG=(bool, True))
+
+# Take environment variables from .env file
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-j-#j-uzt!fu4fq)=*0$&bv69+yg1px@8!w!hsk*m3r5%d$de0('
