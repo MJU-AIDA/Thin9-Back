@@ -175,7 +175,7 @@ def ImageUpload(request):
             result = []
             for foodname in predicted_name:
                 print(foodname)
-                if foodname == "용기":
+                if foodname == "용기": # !나중에 삭제
                     continue
                 food = Food.objects.get(name=foodname)
                 data = {
@@ -206,22 +206,23 @@ def Result(request):
     if request.method == "POST":
         userid = get_id_from_token(request)  # userid
 
-        predicted = request.POST.get('realFoodName')  # 프론트에서 보낸 예측한 음식 이름 저장
-        print(f"predicted : {predicted}")
-        predicted_data = search(predicted)
+        predicted = request.POST.getlist('realFoodName')[0].split(',')  # 프론트에서 보낸 예측한 음식 이름 저장
+        print(f"음식이름: {predicted}")
+        for pred in predicted:
+            predicted_data = search(pred)
+            print(predicted_data)
 
-        gallery = cache.get('temp')  # 캐시에서 gallery 객체 꺼내옴
-        print(gallery)
+            gallery = cache.get('temp')  # 캐시에서 gallery 객체 꺼내옴
+            print(f"갤러리에서 꺼내옴: {gallery}")
 
-        # 꺼내온 객체 Gallery 테이블에 저장
-        gallery.name = predicted_data['name']
-        gallery.total = predicted_data['total']
-        gallery.kcal = predicted_data['kcal']
-        gallery.pro = predicted_data['pro']
-        gallery.carbon = predicted_data['carbon']
-        gallery.fat = predicted_data['fat']
-
-        gallery.save()
+            # 꺼내온 객체 Gallery 테이블에 저장
+            gallery.name = predicted_data['name']
+            gallery.total = predicted_data['total']
+            gallery.kcal = predicted_data['kcal']
+            gallery.pro = predicted_data['pro']
+            gallery.carbon = predicted_data['carbon']
+            gallery.fat = predicted_data['fat']
+            gallery.save()
 
         return JsonResponse({'message': '최종 업로드 성공'}, status=200)
     return JsonResponse({'error: 잘못된 요청'}, status=400)
