@@ -1,5 +1,6 @@
 from django.db import models
 from accounts.models import Account
+from datetime import datetime
 # Create your models here.
 
 # 사용자별 업로드 정보
@@ -12,7 +13,8 @@ class Gallery(models.Model):
     carbon = models.IntegerField(blank=True, null=True) # 탄수화물
     pro = models.IntegerField(blank=True, null=True) # 단백질
     fat = models.IntegerField(blank=True, null=True) # 지방
-    upload_date = models.DateTimeField(auto_now_add=True) # 이미지 업로드 날짜
+    # upload_date = models.DateTimeField(auto_now_add=True) # 이미지 업로드 날짜
+    upload_date = models.DateTimeField(default=datetime.now()) # 이미지 업로드 날짜
     food_image = models.ImageField(upload_to="media/", blank=True, null=True) # 음식 이미지 파일
 
 

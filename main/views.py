@@ -42,7 +42,7 @@ def Upload(request):
                 .annotate(total_calories=Sum('kcal'))
                 .values('upload_date', 'total_calories')
             )
-            print(aggregated_data)
+            # print(aggregated_data)
 
             seoul_tz = pytz.timezone('Asia/Seoul')
             temp_data = [
@@ -64,7 +64,7 @@ def Upload(request):
             # convert the defaultdict to a list of dictionaries
             data = [{'date': k, 'total_calories': v} for k, v in calories_by_date.items()]
 
-            print(data)
+            # print(data)
             return JsonResponse(data, safe=False, status=200)
 
         else:
@@ -86,6 +86,8 @@ def UploadDate(request, formattedDate):
             # 날짜별 각 음식의 영양소 정보
 
             date = datetime.strptime(formattedDate, '%Y%m%d')
+            cache.set('temp_date', date, timeout=200)
+            # print(date)
             next_date = date + timedelta(days=1)
 
             aggregated_data = (
@@ -103,7 +105,7 @@ def UploadDate(request, formattedDate):
             menulist = [menu['name'] for menu in
                         Gallery.objects.filter(user=userid, upload_date__range=(date, next_date)).order_by(
                             'upload_date').values('name')]
-            print(menulist)
+            # print(menulist)
 
             if not aggregated_data:
                 data = {
@@ -161,7 +163,7 @@ def ImageUpload(request):
 
         # Gallery 객체 cache에 임시 저장
         gallery = Gallery(user_id=userid, name='', total='', kcal='', pro='', carbon='', fat='', food_image=food_image)
-        cache.set('temp', gallery, timeout=120)
+        cache.set('temp', gallery, timeout=200)
 
         # predict 수행
         uploaded_file_url = handle_uploaded_file(food_image)
@@ -213,9 +215,7 @@ def Result(request):
         for pred in predicted:
             predicted_data = search(pred)
             print(predicted_data)
-
             gallery = cache.get('temp')  # 캐시에서 gallery 객체 꺼내옴
-            print(f"갤러리에서 꺼내옴: {gallery}")
 
             # 꺼내온 객체 Gallery 테이블에 저장
             gallery.name = predicted_data['name']
@@ -224,7 +224,9 @@ def Result(request):
             gallery.pro = predicted_data['pro']
             gallery.carbon = predicted_data['carbon']
             gallery.fat = predicted_data['fat']
+            gallery.upload_date = cache.get('temp_date')
             gallery.save()
+            cache.delete('temp_date')
 
         return JsonResponse({'message': '최종 업로드 성공'}, status=200)
     return JsonResponse({'error: 잘못된 요청'}, status=400)
