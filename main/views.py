@@ -226,7 +226,7 @@ def Result(request):
             gallery.fat = predicted_data['fat']
             gallery.upload_date = cache.get('temp_date')
             gallery.save()
-            cache.delete('temp_date')
+        cache.delete('temp_date')
 
         return JsonResponse({'message': '최종 업로드 성공'}, status=200)
     return JsonResponse({'error: 잘못된 요청'}, status=400)
