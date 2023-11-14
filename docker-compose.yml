@@ -1,0 +1,34 @@
+version: '3'
+services:
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: "cal_db"
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "1234"
+    ports:
+      - "5432:5432"
+  be:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: thin9_back
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    entrypoint: ./wait-for-it.sh postgres_db:5432 -- bash -c
+    command:
+      - |
+        python manage.py makemigrations &&
+        python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8000
+    restart: unless-stopped
+    environment:
+      ML_SERVER_OD: host.docker.internal:8001
+      ML_SERVER_FOODSAM: host.docker.internal:8002
+      DB_SERVER: db
+      DEBUG: "True"
