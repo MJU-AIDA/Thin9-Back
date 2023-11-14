@@ -169,7 +169,10 @@ cython_debug/
 
 #environments
 *.sh
+!wait-for-it.sh
+
 .DS_*
 
 # annotation
 MEMO.md
+TODO.md
