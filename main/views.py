@@ -1,4 +1,3 @@
-from xxlimited import foo
 from django.shortcuts import render
 from accounts.views import validate_token
 from accounts.views import get_id_from_token
@@ -22,13 +21,11 @@ from django.core.cache import cache
 from collections import defaultdict
 import pytz
 
-
-# import model_preprocess
-
-
 # Create your views here.
 
 # 식단 업로드 페이지 접속(Calendar)
+
+
 @csrf_exempt
 def Upload(request):
     if validate_token(request):
@@ -48,21 +45,23 @@ def Upload(request):
             temp_data = [
                 {
                     'date': item['upload_date'].astimezone(seoul_tz).strftime('%Y%m%d') if item[
-                                                                                               'upload_date'] is not None else None,
+                        'upload_date'] is not None else None,
                     'total_calories': item['total_calories']
                 }
                 for item in aggregated_data
             ]
             print(temp_data)
             # create a dictionary to hold date and total calories
-            calories_by_date = defaultdict(float)  # default value of float is 0.0
+            # default value of float is 0.0
+            calories_by_date = defaultdict(float)
 
             for item in temp_data:
                 # sum up calories by date
                 calories_by_date[item['date']] += item['total_calories']
 
             # convert the defaultdict to a list of dictionaries
-            data = [{'date': k, 'total_calories': v} for k, v in calories_by_date.items()]
+            data = [{'date': k, 'total_calories': v}
+                    for k, v in calories_by_date.items()]
 
             # print(data)
             return JsonResponse(data, safe=False, status=200)
@@ -91,7 +90,8 @@ def UploadDate(request, formattedDate):
             next_date = date + timedelta(days=1)
 
             aggregated_data = (
-                Gallery.objects.filter(user=userid, upload_date__range=(date, next_date))
+                Gallery.objects.filter(
+                    user=userid, upload_date__range=(date, next_date))
                 .annotate(date=TruncDate('upload_date'))
                 .values('date')
                 .annotate(
@@ -162,30 +162,32 @@ def ImageUpload(request):
         food_image = request.FILES.get('photo')  # 음식 이미지
 
         # Gallery 객체 cache에 임시 저장
-        gallery = Gallery(user_id=userid, name='', total='', kcal='', pro='', carbon='', fat='', food_image=food_image)
+        gallery = Gallery(user_id=userid, name='', total='', kcal='',
+                          pro='', carbon='', fat='', food_image=food_image)
         cache.set('temp', gallery, timeout=200)
 
         # predict 수행
         uploaded_file_url = handle_uploaded_file(food_image)
         print(f"uploaded_file_url : {uploaded_file_url}")
-        # file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file_url.lstrip('/media/'))  # 파일 경로 URL
-        file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file_url.replace('/media/', ''))  # 파일 경로 URL
+        file_path = os.path.join(
+            settings.MEDIA_ROOT, uploaded_file_url.replace('/media/', ''))  # 파일 경로 URL
         print(file_path)
 
         predicted_name = prediction(file_path)
         if predicted_name is None:
             return JsonResponse({"error": "predicted food list is empty!"}, status=400)
         else:
-            pred_sam_name = doFoodSAM(file_path)# 모델이 예측한 음식 이름 받아옴 (list or string)
+            # 모델이 예측한 음식 이름 받아옴 (list or string)
+            pred_sam_name = doFoodSAM(file_path)
             predicted_name += pred_sam_name
         # 업로드 성공
         print(f"여기까지 옴:{predicted_name}")
         result = []
         for foodname in predicted_name:
             print(foodname)
-            if foodname == "용기": # !나중에 삭제
+            if foodname == "용기":  # !나중에 삭제
                 continue
-            try: 
+            try:
                 # food = Food.objects.get(name="닭갈비")
                 food = Food.objects.filter(name__iexact=foodname).first()
                 if food is None:
@@ -218,7 +220,8 @@ def Result(request):
     if request.method == "POST":
         userid = get_id_from_token(request)  # userid
 
-        predicted = request.POST.getlist('realFoodName')[0].split(',')  # 프론트에서 보낸 예측한 음식 이름 저장
+        predicted = request.POST.getlist('realFoodName')[
+            0].split(',')  # 프론트에서 보낸 예측한 음식 이름 저장
         print(f"음식이름: {predicted}")
         for pred in predicted:
             predicted_data = search(pred)
@@ -260,7 +263,8 @@ def DeleteMenu(request, date, menuId):
 
         menu_to_delete = menulist[menuId]
 
-        menu_obj = Gallery.objects.filter(user=userid, name=menu_to_delete).first()
+        menu_obj = Gallery.objects.filter(
+            user=userid, name=menu_to_delete).first()
         if menu_obj:
             menu_obj.delete()
             return JsonResponse({'message': '메뉴 삭제 성공'}, status=200)
@@ -360,7 +364,8 @@ def handle_uploaded_file(uploaded_file):
     fs = FileSystemStorage()
     filename = fs.save(uploaded_file.name, uploaded_file)
     uploaded_file_url = fs.url(filename)
-    print(f"fs : {fs}, filename : {filename}, uploaded_file_url : {uploaded_file_url}")
+    print(
+        f"fs : {fs}, filename : {filename}, uploaded_file_url : {uploaded_file_url}")
     return uploaded_file_url
 
 
@@ -374,7 +379,8 @@ def prediction(image_path):
     # FastAPI 호출
     # url = 'http://0.0.0.0:8001/img_object_detection_to_json'
     url = f'{settings.ENV("ML_SERVER_OD")}/img_object_detection_to_json'
-    files = {'file': (image_path.split("/")[-1], open(image_path, 'rb'), 'image/jpeg')}
+    files = {'file': (image_path.split(
+        "/")[-1], open(image_path, 'rb'), 'image/jpeg')}
     headers = {'accept': 'application/json'}
 
     response = requests.post(url, files=files, headers=headers)
@@ -382,11 +388,6 @@ def prediction(image_path):
     # 결과 확인
     if response.status_code == 200:
         result = response.json()
-        # # !임시코드임(제거 필요)
-        # r_result = {"detect_objects":[], }
-        # for d in result["detect_objects"]:
-        #     if d["name"] != "용기":
-        #         r_result.append(d)
         print(result)
         food_list = []
         confi_list = []
@@ -394,21 +395,6 @@ def prediction(image_path):
             print(i)
             food_list.append(i["name"])
             confi_list.append(i["confidence"])
-        # sorted_data = sorted(result.items(), key=lambda x: x[1], reverse=True) # value 값으로 정렬
-        # sorted_keys = [item[0] for item in sorted_data]
-
-        # label_path = os.path.join(settings.STATIC_ROOT, 'model_label.json')
-        # label_data = read_json_file(label_path)
-        # top5 = {}
-
-        # for key in sorted_keys:
-        #    label = label_data[key]
-        #    prob = result[key]
-        #    top5[label] = prob
-
-        # top5_json = json.dumps(top5) # json 파일로 변환
-        # print("성공")
-        # print(f"분류 결과 : {top5_json}")
         print(food_list)
         return food_list  # top 1의 음식 이름
     else:
@@ -419,12 +405,13 @@ def prediction(image_path):
 @csrf_exempt
 def doFoodSAM(image_path) -> list:
     url = f'{settings.ENV("ML_SERVER_FOODSAM")}/img_seg_to_json'
-    files = {'file': (image_path.split("/")[-1], open(image_path, 'rb'), 'image/jpeg')}
+    files = {'file': (image_path.split(
+        "/")[-1], open(image_path, 'rb'), 'image/jpeg')}
     headers = {'accept': 'application/json'}
     response = requests.post(url, files=files, headers=headers)
     if response.status_code == 200:
         result = response.json()
-        return result["index"] # list
+        return result["index"]  # list
     else:
         print("실패")
         return None
@@ -495,7 +482,8 @@ def calculator(userid):  # 권장 섭취량(칼로리, 탄수화물, 단백질, 
     today = date.today()
 
     gender, birth, height, weight = user.gender, user.birth, user.height, user.weight
-    birth_year, birth_month, birth_day = str(birth).split('-')[0], str(birth).split('-')[1], str(birth).split('-')[2]
+    birth_year, birth_month, birth_day = str(birth).split(
+        '-')[0], str(birth).split('-')[1], str(birth).split('-')[2]
     print(birth_year, birth_month, birth_day)
     # 나이 계산
     if today.month > int(birth_month) or (today.month == int(birth_month) and today.day >= int(birth_day)):
