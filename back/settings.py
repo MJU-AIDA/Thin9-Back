@@ -144,15 +144,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [
-#     #os.path.join(BASE_DIR, 'static'),
-#     os.path.join(BASE_DIR, 'static/front/build'),
-#     os.path.join(BASE_DIR, 'static/front/build/static'),
-#     os.path.join(BASE_DIR, 'static/front/build/static/css'),
-#     os.path.join(BASE_DIR, 'static/front/build/static/js'),
-#    #os.path.join(BASE_DIR, 'static/front/build/static/media')
-    #   os.path.join(BASE_DIR, 'static/media')
-]
+STATICFILES_DIRS = []
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static', 'staticfiles')
 
