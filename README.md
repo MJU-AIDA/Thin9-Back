@@ -39,8 +39,8 @@ pip install -r requriements.txt
 
 ```shell
 DB_SERVER=localhost
-ML_SERVER_OD=https://localhost:8001
-ML_SERVER_FOODSAM=https://localhost:8002
+ML_SERVER_OD=http://localhost:8001
+ML_SERVER_FOODSAM=http://localhost:8002
 ```
 
 ### Migration and Run Server
