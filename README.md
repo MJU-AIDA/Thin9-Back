@@ -38,9 +38,9 @@ pip install -r requriements.txt
 `.env` example 
 
 ```shell
-ML_SERVER_OD=localhost:8000
-ML_SERVER_FOODSAM=localhost:8001
-DB_SERVER=localhost:8002
+DB_SERVER=localhost:5432
+ML_SERVER_OD=localhost:8001
+ML_SERVER_FOODSAM=localhost:8002
 ```
 
 ### Migration and Run Server
