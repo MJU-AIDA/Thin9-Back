@@ -172,31 +172,39 @@ def ImageUpload(request):
         file_path = os.path.join(settings.MEDIA_ROOT, uploaded_file_url.replace('/media/', ''))  # 파일 경로 URL
         print(file_path)
 
-        predicted_name = prediction(file_path)  # 모델이 예측한 음식 이름 받아옴 (list or string)
+        predicted_name = prediction(file_path)
+        if predicted_name is None:
+            return JsonResponse({"error": "predicted food list is empty!"}, status=400)
+        else:
+            pred_sam_name = doFoodSAM(file_path)# 모델이 예측한 음식 이름 받아옴 (list or string)
+            predicted_name += pred_sam_name
         # 업로드 성공
-        try:
-            print(f"여기까지 옴:{predicted_name}")
-            result = []
-            for foodname in predicted_name:
-                print(foodname)
-                if foodname == "용기": # !나중에 삭제
-                    continue
-                food = Food.objects.get(name=foodname)
-                data = {
-                    'predicted': foodname,
-                    'kcal': food.kcal,
-                    'carbon': food.carbon,
-                    'pro': food.pro,
-                    'fat': food.fat,
-                }
-                result.append(data)
-                print(result)
-            return JsonResponse({'message': '사진 업로드 성공', "result": result}, status=200)
-
-        except Food.DoesNotExist:
-            return JsonResponse({'error': f"{predicted_name} 을 찾을 수 없습니다."}, status=404)
-        except Exception as e:
-            return JsonResponse({'error': f"{e}"}, status=404)
+        print(f"여기까지 옴:{predicted_name}")
+        result = []
+        for foodname in predicted_name:
+            print(foodname)
+            if foodname == "용기": # !나중에 삭제
+                continue
+            try: 
+                # food = Food.objects.get(name="닭갈비")
+                food = Food.objects.filter(name__iexact=foodname).first()
+                if food is None:
+                    raise Food.DoesNotExist
+            except Food.DoesNotExist:
+                print(f"{foodname}을(를) 찾을 수 없습니다.")
+                continue
+            except Exception as e:
+                return JsonResponse({'error': f"{e}"}, status=404)
+            data = {
+                'predicted': foodname,
+                'kcal': food.kcal,
+                'carbon': food.carbon,
+                'pro': food.pro,
+                'fat': food.fat,
+            }
+            result.append(data)
+            print(result)
+        return JsonResponse({'message': '사진 업로드 성공', "result": result}, status=200)
     # POST 요청이 아닌 경우
     return JsonResponse({"error": "Invalid request"}, status=400)
 
@@ -226,7 +234,7 @@ def Result(request):
             gallery.fat = predicted_data['fat']
             gallery.upload_date = cache.get('temp_date')
             gallery.save()
-            cache.delete('temp_date')
+        cache.delete('temp_date')
 
         return JsonResponse({'message': '최종 업로드 성공'}, status=200)
     return JsonResponse({'error: 잘못된 요청'}, status=400)
@@ -365,7 +373,7 @@ def prediction(image_path):
     print("-------------------", image_path)
     # FastAPI 호출
     # url = 'http://0.0.0.0:8001/img_object_detection_to_json'
-    url = f'{settings.ENV("ML_SERVER")}/img_object_detection_to_json'
+    url = f'{settings.ENV("ML_SERVER_OD")}/img_object_detection_to_json'
     files = {'file': (image_path.split("/")[-1], open(image_path, 'rb'), 'image/jpeg')}
     headers = {'accept': 'application/json'}
 
@@ -403,6 +411,20 @@ def prediction(image_path):
         # print(f"분류 결과 : {top5_json}")
         print(food_list)
         return food_list  # top 1의 음식 이름
+    else:
+        print("실패")
+        return None
+
+
+@csrf_exempt
+def doFoodSAM(image_path) -> list:
+    url = f'{settings.ENV("ML_SERVER_FOODSAM")}/img_seg_to_json'
+    files = {'file': (image_path.split("/")[-1], open(image_path, 'rb'), 'image/jpeg')}
+    headers = {'accept': 'application/json'}
+    response = requests.post(url, files=files, headers=headers)
+    if response.status_code == 200:
+        result = response.json()
+        return result["index"] # list
     else:
         print("실패")
         return None
