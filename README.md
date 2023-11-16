@@ -30,7 +30,7 @@ conda activate thin9-back
 ```
 ### Install Requriements
 ```shell
-pip install -r requriements.txt
+pip install -r requirements.txt
 ```
 
 ### Set `.env` 
